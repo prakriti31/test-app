@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
+app.set("trust proxy", 1);
 
 const {
   SERVER_ROOT = "http://localhost:4000",
@@ -19,8 +20,18 @@ const {
   SESSION_SECRET = "please-change-me"
 } = process.env;
 
+const allowedOrigins = [
+  FRONTEND_ROOT,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173"
+].filter(Boolean);
+
 app.use(cors({
-  origin: FRONTEND_ROOT,
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("CORS not allowed"), false);
+  },
   credentials: true
 }));
 app.use(bodyParser.json());
@@ -36,9 +47,18 @@ app.use(session({
   }
 }));
 
+function getServerOrigin(req) {
+  if (SERVER_ROOT) return SERVER_ROOT;
+  const xfProto = (req.headers["x-forwarded-proto"] || "").toString().split(",")[0].trim();
+  const xfHost = (req.headers["x-forwarded-host"] || "").toString().split(",")[0].trim();
+  const proto = xfProto || req.protocol;
+  const host = xfHost || req.get("host");
+  return `${proto}://${host}`;
+}
+
 // Start Google OAuth flow
 app.get("/api/auth/google", (req, res) => {
-  const redirectUri = `${SERVER_ROOT}/api/auth/google/callback`;
+  const redirectUri = `${getServerOrigin(req)}/api/auth/google/callback`;
   const scope = encodeURIComponent("openid profile email https://www.googleapis.com/auth/calendar.readonly");
   const url =
     `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -52,14 +72,15 @@ app.get("/api/auth/google/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) return res.status(400).send("No code");
   try {
-    const tokenRes = await axios.post("https://oauth2.googleapis.com/token", null, {
-      params: {
-        code,
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
-        redirect_uri: `${SERVER_ROOT}/api/auth/google/callback`,
-        grant_type: "authorization_code"
-      },
+    const redirectUri = `${getServerOrigin(req)}/api/auth/google/callback`;
+    const form = new URLSearchParams({
+      code,
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code"
+    });
+    const tokenRes = await axios.post("https://oauth2.googleapis.com/token", form.toString(), {
       headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
 

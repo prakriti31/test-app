@@ -1,7 +1,9 @@
 // src/api/calendar.ts
 import axios from "axios";
 
+axios.defaults.baseURL = (import.meta as any).env?.VITE_SERVER_ROOT || ""; // <-- set in Vercel
 axios.defaults.withCredentials = true; // send cookies for session-backed auth
+
 
 export interface Meeting {
   id: string;

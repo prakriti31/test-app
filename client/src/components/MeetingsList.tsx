@@ -33,7 +33,8 @@ const MeetingsList: React.FC = () => {
 
   const handleLogin = () => {
     // Backend initiates Google OAuth and redirects back
-    window.location.href = "/api/auth/google";
+    const serverRoot = (import.meta as any).env?.VITE_SERVER_ROOT || "";
+    window.location.href = `${serverRoot}/api/auth/google`;
   };
 
   const handleLogout = async () => {
