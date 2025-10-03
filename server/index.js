@@ -87,7 +87,15 @@ app.get("/api/auth/google/callback", async (req, res) => {
 
     // Save tokens in session (access_token, refresh_token)
     req.session.tokens = tokenRes.data;
-    res.redirect(FRONTEND_ROOT);
+    
+    // Explicitly save session before redirect to ensure cookie is set
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).send("Session save failed");
+      }
+      res.redirect(FRONTEND_ROOT);
+    });
   } catch (err) {
     console.error("oauth error", err.response?.data || err.message);
     res.status(500).send("OAuth token exchange failed");
@@ -239,7 +247,18 @@ app.get("/api/debug/config", (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     },
-    hasSession: !!req.session.tokens
+    hasSession: !!req.session.tokens,
+    sessionId: req.session.id,
+    cookies: req.headers.cookie || 'none'
+  });
+});
+
+// Debug endpoint to check authentication status
+app.get("/api/debug/auth-status", (req, res) => {
+  res.json({
+    authenticated: !!req.session.tokens,
+    hasSessionId: !!req.session.id,
+    sessionData: req.session.tokens ? 'present' : 'missing'
   });
 });
 
