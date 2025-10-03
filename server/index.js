@@ -51,9 +51,15 @@ app.use(session({
 }));
 
 function getServerOrigin(req) {
+  // When accessed through Vercel rewrites, use the frontend origin for OAuth callbacks
+  // This ensures cookies are set on the correct domain
+  const xfHost = (req.headers["x-forwarded-host"] || "").toString().split(",")[0].trim();
+  if (xfHost && xfHost.includes("test-app-client-one.vercel.app")) {
+    return `https://${xfHost}`;
+  }
+  
   if (SERVER_ROOT) return SERVER_ROOT;
   const xfProto = (req.headers["x-forwarded-proto"] || "").toString().split(",")[0].trim();
-  const xfHost = (req.headers["x-forwarded-host"] || "").toString().split(",")[0].trim();
   const proto = xfProto || req.protocol;
   const host = xfHost || req.get("host");
   return `${proto}://${host}`;
