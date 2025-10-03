@@ -20,10 +20,12 @@ const {
   SESSION_SECRET = "please-change-me"
 } = process.env;
 
+// Allow both the client domain (for OAuth redirects) and same-origin requests from Vercel rewrites
 const allowedOrigins = [
   FRONTEND_ROOT,
   "http://localhost:5173",
-  "http://127.0.0.1:5173"
+  "http://127.0.0.1:5173",
+  "https://test-app-client-one.vercel.app" // Explicitly allow client domain
 ].filter(Boolean);
 
 app.use(cors({

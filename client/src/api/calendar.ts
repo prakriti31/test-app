@@ -1,7 +1,9 @@
 // src/api/calendar.ts
 import axios from "axios";
 
-axios.defaults.baseURL = (import.meta as any).env?.VITE_SERVER_ROOT || ""; // <-- set in Vercel
+// Use relative paths - Vercel rewrites will proxy /api/* to the server
+// This keeps client and API on same domain, avoiding third-party cookie blocking
+axios.defaults.baseURL = "";
 axios.defaults.withCredentials = true; // send cookies for session-backed auth
 
 

@@ -33,8 +33,8 @@ const MeetingsList: React.FC = () => {
 
   const handleLogin = () => {
     // Backend initiates Google OAuth and redirects back
-    const serverRoot = (import.meta as any).env?.VITE_SERVER_ROOT || "";
-    window.location.href = `${serverRoot}/api/auth/google`;
+    // Using relative path - Vercel rewrites proxy to server
+    window.location.href = "/api/auth/google";
   };
 
   const handleLogout = async () => {
