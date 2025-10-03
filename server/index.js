@@ -229,5 +229,26 @@ app.post("/api/summarize", async (req, res) => {
   }
 });
 
+// Debug endpoint to verify environment configuration
+app.get("/api/debug/config", (req, res) => {
+  res.json({
+    nodeEnv: process.env.NODE_ENV,
+    serverRoot: SERVER_ROOT,
+    frontendRoot: FRONTEND_ROOT,
+    cookieSettings: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    },
+    hasSession: !!req.session.tokens
+  });
+});
+
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server listening on ${PORT}`);
+  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`SERVER_ROOT: ${SERVER_ROOT}`);
+  console.log(`FRONTEND_ROOT: ${FRONTEND_ROOT}`);
+  console.log(`Cookie secure: ${process.env.NODE_ENV === 'production'}`);
+  console.log(`Cookie sameSite: ${process.env.NODE_ENV === 'production' ? 'none' : 'lax'}`);
+});
